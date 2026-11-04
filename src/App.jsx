@@ -104,7 +104,7 @@ function App() {
               : <div className="photo-placeholder"><UserRound size={76}/><span>YOUR PHOTO</span></div>}
             <div className="visual-caption"><span>01 / ABOUT ME</span><span>OPEN TO OPPORTUNITIES</span></div>
           </div>
-          <div className="hero-index">BASED ON<br/>YOUR STORY</div>
+          <div className="hero-index"></div>
         </section>
 
         <section className="content-section section-wrap" id="about">
@@ -112,7 +112,6 @@ function App() {
           <div className="about-grid">
             <p className="large-copy">{profile.about || 'Use the admin dashboard to write a short summary about your background, interests, and the value you bring.'}</p>
             <div className="about-side">
-              <p className="muted">This section is ready for your story. Keep it concise, personal, and focused on the kind of opportunities you are looking for.</p>
               <div className="social-links">
                 {profile.linkedin && <a href={profile.linkedin} target="_blank" rel="noreferrer"><Linkedin size={17}/> LinkedIn <ArrowUpRight size={14}/></a>}
                 {profile.github && <a href={profile.github} target="_blank" rel="noreferrer"><Github size={17}/> GitHub <ArrowUpRight size={14}/></a>}
