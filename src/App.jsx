@@ -75,7 +75,7 @@ function App() {
           <a href="#projects" onClick={() => setMobileMenu(false)}>Projects</a>
           <a href="#experience" onClick={() => setMobileMenu(false)}>Experience</a>
           <a href="#contact" onClick={() => setMobileMenu(false)}>Contact</a>
-          <button className="admin-link" onClick={() => setAdminOpen(true)}><LockKeyhole size={15}/> Admin</button>
+          <button className="admin-link" onClick={() => setAdminOpen(true)}><LockKeyhole size={15}/> </button>
         </nav>
       </header>
 
