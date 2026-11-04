@@ -136,7 +136,22 @@ function App() {
           <p className="eyebrow">05 / CONTACT</p>
           <h2>Have a project<br/>in mind<span>?</span></h2>
           <p className="muted">Let's connect and create something meaningful.</p>
-          {profile.email ? <a className="button button-primary" href={`mailto:${profile.email}`}>Say hello <ArrowUpRight size={17}/></a> : <p className="empty-state">Add your email address in Admin to activate this contact button.</p>}
+          
+{profile.phone ? (
+  <a
+    className="button button-primary"
+    href={`https://wa.me/${profile.phone.replace(/\D/g, '').replace(/^0/, '62')}`}
+    target="_blank"
+    rel="noreferrer"
+  >
+    Chat on WhatsApp <ArrowUpRight size={17}/>
+  </a>
+) : (
+  <p className="empty-state">
+    Add your WhatsApp number in Admin to activate this contact button.
+  </p>
+)}
+
         </section>
       </main>
       <footer className="footer section-wrap"><span>© {new Date().getFullYear()} {profile.full_name || 'Your Name'}. All rights reserved.</span><button onClick={() => setAdminOpen(true)}><LockKeyhole size={13}/> Admin access</button><a href="#home">Back to top ↑</a></footer>
