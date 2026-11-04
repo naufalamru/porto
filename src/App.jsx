@@ -72,7 +72,6 @@ function App() {
           {mobileMenu ? <X /> : <Menu />}
         </button>
         <nav className={mobileMenu ? 'nav-links open' : 'nav-links'}>
-          <a href="#about" onClick={() => setMobileMenu(false)}>About</a>
           <a href="#projects" onClick={() => setMobileMenu(false)}>Projects</a>
           <a href="#experience" onClick={() => setMobileMenu(false)}>Experience</a>
           <a href="#contact" onClick={() => setMobileMenu(false)}>Contact</a>
@@ -97,6 +96,10 @@ function App() {
               {profile.location && <span><MapPin size={15}/>{profile.location}</span>}
               {profile.email && <a href={`mailto:${profile.email}`}><Mail size={15}/>{profile.email}</a>}
             </div>
+            <div className="social-links">
+                {profile.linkedin && <a href={profile.linkedin} target="_blank" rel="noreferrer"><Linkedin size={17}/> LinkedIn <ArrowUpRight size={14}/></a>}
+                {profile.github && <a href={profile.github} target="_blank" rel="noreferrer"><Github size={17}/> GitHub <ArrowUpRight size={14}/></a>}
+              </div>
           </div>
           <div className="hero-visual">
             {profile.photo_url
@@ -105,19 +108,6 @@ function App() {
             <div className="visual-caption"><span>01 / ABOUT ME</span><span>OPEN TO OPPORTUNITIES</span></div>
           </div>
           <div className="hero-index"></div>
-        </section>
-
-        <section className="content-section section-wrap" id="about">
-          <SectionHeading number="01" title="A little about me" note="ABOUT"/>
-          <div className="about-grid">
-            <p className="large-copy">{profile.about || 'Use the admin dashboard to write a short summary about your background, interests, and the value you bring.'}</p>
-            <div className="about-side">
-              <div className="social-links">
-                {profile.linkedin && <a href={profile.linkedin} target="_blank" rel="noreferrer"><Linkedin size={17}/> LinkedIn <ArrowUpRight size={14}/></a>}
-                {profile.github && <a href={profile.github} target="_blank" rel="noreferrer"><Github size={17}/> GitHub <ArrowUpRight size={14}/></a>}
-              </div>
-            </div>
-          </div>
         </section>
 
         <section className="content-section section-wrap" id="projects">
