@@ -185,6 +185,8 @@ function AdminPanel({ profile, setProfile, items, setItems, session, setSession,
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [uploadingItemImage, setUploadingItemImage] = useState(false)
   const [message, setMessage] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
@@ -200,6 +202,107 @@ function AdminPanel({ profile, setProfile, items, setItems, session, setSession,
     if (error) setMessage(error.message)
     else { setProfile(profileForm); setMessage('Profile berhasil disimpan.') }
   }
+  
+async function uploadProfilePhoto(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+
+  // Validasi format gambar
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+
+  if (!allowedTypes.includes(file.type)) {
+    setMessage('Format foto harus JPG, PNG, atau WebP.')
+    e.target.value = ''
+    return
+  }
+
+  // Maksimal 5 MB
+  if (file.size > 5 * 1024 * 1024) {
+    setMessage('Ukuran foto maksimal 5 MB.')
+    e.target.value = ''
+    return
+  }
+
+  setUploadingPhoto(true)
+  setMessage('Mengunggah foto...')
+
+  try {
+    const extension = file.name.split('.').pop().toLowerCase()
+    const filePath = `profile/${Date.now()}.${extension}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('portfolio-images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type
+      })
+
+    if (uploadError) throw uploadError
+
+    const { data } = supabase.storage
+      .from('portfolio-images')
+      .getPublicUrl(filePath)
+
+    setProfileForm(prev => ({
+      ...prev,
+      photo_url: data.publicUrl
+    }))
+
+    setMessage('Foto berhasil diunggah. Klik Save profile untuk menyimpan perubahan.')
+  } catch (error) {
+    setMessage(`Gagal mengunggah foto: ${error.message}`)
+  } finally {
+    setUploadingPhoto(false)
+    e.target.value = ''
+  }
+}
+
+
+  async function uploadItemImage(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      setMessage('Format gambar harus JPG, PNG, atau WebP.')
+      e.target.value = ''
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage('Ukuran gambar maksimal 5 MB.')
+      e.target.value = ''
+      return
+    }
+
+    setUploadingItemImage(true)
+    setMessage('Mengunggah gambar project...')
+    try {
+      const extension = file.name.split('.').pop().toLowerCase()
+      const filePath = `projects/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`
+      const { error: uploadError } = await supabase.storage
+        .from('portfolio-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type
+        })
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage
+        .from('portfolio-images')
+        .getPublicUrl(filePath)
+
+      setForm(prev => ({ ...prev, image_url: data.publicUrl }))
+      setMessage('Gambar berhasil diunggah. Klik Save item untuk menyimpan project.')
+    } catch (error) {
+      setMessage(`Gagal mengunggah gambar: ${error.message}`)
+    } finally {
+      setUploadingItemImage(false)
+      e.target.value = ''
+    }
+  }
+
   function startNew(cat = category) {
     setCategory(cat); setEditing(null); setFormOpen(true); setForm({ ...EMPTY_ITEM, category: cat })
   }
@@ -235,11 +338,48 @@ function AdminPanel({ profile, setProfile, items, setItems, session, setSession,
         <Field label="Location" value={profileForm.location} onChange={v => setProfileForm({...profileForm,location:v})}/>
         <Field label="Email" type="email" value={profileForm.email} onChange={v => setProfileForm({...profileForm,email:v})}/>
         <Field label="Phone" value={profileForm.phone} onChange={v => setProfileForm({...profileForm,phone:v})}/>
-        <Field label="Profile photo URL" value={profileForm.photo_url} onChange={v => setProfileForm({...profileForm,photo_url:v})} placeholder="https://..."/>
+        <div className="field full-field">
+          <label>Profile Photo</label>
+          {profileForm.photo_url && (
+            <div style={{ marginBottom: '12px' }}>
+              <img
+                src={profileForm.photo_url}
+                alt="Profile preview"
+                style={{
+                  width: '130px',
+                  height: '130px',
+                  objectFit: 'cover',
+                  borderRadius: '12px',
+                  border: '1px solid #444'
+                }}
+              />
+            </div>
+          )}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={uploadProfilePhoto}
+            disabled={uploadingPhoto || busy}
+          />
+          <small>
+            {uploadingPhoto
+              ? 'Uploading photo...'
+              : 'JPG, PNG, atau WebP. Maksimal 5 MB.'}
+          </small>
+          {profileForm.photo_url && (
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => setProfileForm(prev => ({ ...prev, photo_url: '' }))}
+            >
+              Remove selected photo
+            </button>
+          )}
+        </div>
         <Field label="LinkedIn URL" value={profileForm.linkedin} onChange={v => setProfileForm({...profileForm,linkedin:v})}/>
         <Field label="GitHub URL" value={profileForm.github} onChange={v => setProfileForm({...profileForm,github:v})}/>
         <div className="field full-field"><label>About me</label><textarea rows="6" value={profileForm.about} onChange={e => setProfileForm({...profileForm,about:e.target.value})} placeholder="Ceritakan tentang diri, keahlian, dan tujuan profesionalmu…"/></div>
-      </div><button className="button button-primary" disabled={busy}><Save size={16}/> {busy ? 'Saving…' : 'Save profile'}</button></form>
+      </div><button className="button button-primary" disabled={busy || uploadingPhoto}><Save size={16}/> {busy ? 'Saving…' : 'Save profile'}</button></form>
       : <div className="items-manager"><div className="manager-toolbar"><p className="form-intro">Tambah, edit, atau hapus informasi {CATEGORIES.find(c => c.key === tab)?.label.toLowerCase()}.</p><button className="button button-primary" onClick={() => startNew(tab)}><Plus size={16}/> Add new</button></div>
         {formOpen ? <form className="editor-form item-editor" onSubmit={saveItem}><div className="editor-title"><h3>{editing ? 'Edit item' : 'New item'}</h3><button type="button" className="text-button" onClick={() => {setEditing(null);setFormOpen(false);setForm(EMPTY_ITEM)}}>Cancel</button></div><div className="form-grid">
           <div className="field"><label>Category</label><select value={form.category} onChange={e => setForm({...form,category:e.target.value})}>{CATEGORIES.map(c => <option value={c.key} key={c.key}>{c.label}</option>)}</select></div>
@@ -247,10 +387,48 @@ function AdminPanel({ profile, setProfile, items, setItems, session, setSession,
           <Field label="Subtitle / organization" value={form.subtitle} onChange={v => setForm({...form,subtitle:v})}/>
           <Field label="Date / period" value={form.date_label} onChange={v => setForm({...form,date_label:v})} placeholder="2024 – 2025"/>
           <Field label="Website / credential URL" value={form.url} onChange={v => setForm({...form,url:v})}/>
-          <Field label="Image URL (optional)" value={form.image_url} onChange={v => setForm({...form,image_url:v})}/>
+          <div className="field full-field">
+            <label>Project image (optional)</label>
+            {form.image_url && (
+              <div style={{ marginBottom: '12px' }}>
+                <img
+                  src={form.image_url}
+                  alt="Project preview"
+                  style={{
+                    display: 'block',
+                    width: 'min(100%, 320px)',
+                    maxHeight: '190px',
+                    objectFit: 'cover',
+                    borderRadius: '10px',
+                    border: '1px solid #444'
+                  }}
+                />
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={uploadItemImage}
+              disabled={uploadingItemImage || busy}
+            />
+            <small>
+              {uploadingItemImage
+                ? 'Uploading image...'
+                : 'Upload JPG, PNG, atau WebP. Maksimal 5 MB.'}
+            </small>
+            {form.image_url && (
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => setForm(prev => ({ ...prev, image_url: '' }))}
+              >
+                Remove selected image
+              </button>
+            )}
+          </div>
           <Field label="Display order" type="number" value={String(form.sort_order ?? 0)} onChange={v => setForm({...form,sort_order:v})}/>
           <div className="field full-field"><label>Description</label><textarea rows="4" value={form.description} onChange={e => setForm({...form,description:e.target.value})} placeholder="Deskripsi singkat…"/></div>
-        </div><button className="button button-primary" disabled={busy}><Save size={16}/>{busy ? 'Saving…' : 'Save item'}</button></form> : null}
+        </div><button className="button button-primary" disabled={busy || uploadingItemImage}><Save size={16}/>{busy ? 'Saving…' : 'Save item'}</button></form> : null}
         <div className="managed-list">{items.filter(i => i.category === tab).map(item => <article className="managed-item" key={item.id}><div className="managed-thumb">{item.image_url ? <img src={item.image_url} alt=""/> : <FolderKanban/>}</div><div className="managed-copy"><strong>{item.title}</strong><span>{item.subtitle} {item.date_label && `· ${item.date_label}`}</span></div><button className="icon-button" title="Edit" onClick={() => startEdit(item)}><Pencil size={16}/></button><button className="icon-button danger" title="Delete" onClick={() => deleteItem(item.id)}><Trash2 size={16}/></button></article>)}{!items.some(i => i.category === tab) && <p className="empty-state">Belum ada data. Klik “Add new” untuk mulai.</p>}</div>
       </div>}
     </section>
